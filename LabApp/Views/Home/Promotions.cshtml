@@ -1,0 +1,92 @@
+@model LabApp.Models.ProductListViewModel
+@{
+    ViewData["Title"] = "Promocje";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Promocje</h1>
+
+        <form method="get" class="row g-2 align-items-end mb-4" id="filtersForm">
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="search">Szukaj po nazwie lub kategorii</label>
+                <input type="text" id="search" name="search" value="@Model.SearchTerm" class="form-control"/>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label" for="category">Kategoria</label>
+                <select id="category" name="category" class="form-select">
+                    <option value="">Wszystkie</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        var isSelected = string.Equals(Model.SelectedCategory, cat, StringComparison.Ordinal);
+                        if (isSelected)
+                        {
+                            <option value="@cat" selected>@cat</option>
+                        }
+                        else
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">Filtruj</button>
+            </div>
+            <div class="col-6 col-md-1 d-grid">
+                <a href="@Url.Action("Promotions", "Home")" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+
+        @if (!Model.Products.Any())
+        {
+            <div class="alert alert-info">Brak produktów w promocji.</div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                @foreach (var product in Model.Products)
+                {
+                    <div class="col">
+                        <div class="card h-100 border-2 border-danger-subtle">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@product.Name</h5>
+                                @if (!string.IsNullOrWhiteSpace(product.Category))
+                                {
+                                    <p class="badge bg-danger-subtle text-dark mb-2">@product.Category</p>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(product.Description))
+                                {
+                                    <p class="card-text text-muted">@product.Description</p>
+                                }
+                                <p class="card-text">
+                                    <span class="text-muted text-decoration-line-through me-2">@product.Price.ToString("C")</span>
+                                    <span class="fw-bold text-danger">@product.PromoPrice?.ToString("C")</span>
+                                </p>
+                                <p class="card-text"><small class="text-muted">Dostępność: @product.Stock</small></p>
+                                <div class="mt-auto d-flex gap-2">
+                                    <a class="btn btn-outline-secondary btn-sm" asp-controller="Store" asp-action="Details" asp-route-id="@product.Id">Szczegóły</a>
+                                    <form asp-controller="Cart" asp-action="Add" asp-route-id="@product.Id" method="post">
+                                        <button type="submit" class="btn btn-primary btn-sm" @(product.Stock <= 0 ? "disabled" : "")>
+                                            @(product.Stock <= 0 ? "Brak na stanie" : "Dodaj do koszyka")
+                                        </button>
+                                        @Html.AntiForgeryToken()
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('filtersForm');
+        const category = document.getElementById('category');
+        if (!form || !category) return;
+        category.addEventListener('change', () => form.submit());
+    })();
+</script>

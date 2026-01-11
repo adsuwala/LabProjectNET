@@ -1,0 +1,30 @@
+@model IEnumerable<string>
+@{
+    ViewData["Title"] = "Kategorie";
+}
+
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Kategorie</h1>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">Brak kategorii do wyświetlenia.</div>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var category in Model)
+                {
+                    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                       asp-controller="Home"
+                       asp-action="Index"
+                       asp-route-category="@category">
+                        <span>@category</span>
+                        <span class="bi bi-arrow-right-short"></span>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>

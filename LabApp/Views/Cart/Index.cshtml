@@ -1,0 +1,220 @@
+@model LabApp.Models.CartPageViewModel
+@{
+    ViewData["Title"] = "Koszyk";
+}
+
+<h1>Koszyk</h1>
+
+@if (ViewBag.CheckoutSuccess is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+    if (ViewBag.OrderTotal is string totalMessage)
+    {
+        <div class="fw-bold">Kwota zamowienia: @totalMessage</div>
+    }
+}
+
+@if (ViewBag.CartWarning is string warningMessage)
+{
+    <div class="alert alert-warning">@warningMessage</div>
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Koszyk jest pusty.</div>
+}
+else
+{
+    <div class="row">
+        <div class="col-lg-8">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Produkt</th>
+                        <th>Cena</th>
+                        <th>Ilosc</th>
+                        <th>Suma</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@item.EffectivePrice.ToString("C")</td>
+                        <td>
+                            <form asp-action="Update" asp-route-id="@item.ProductId" method="post" class="d-inline-flex gap-2 cart-qty-form">
+                                <input type="number" name="quantity" value="@item.Quantity" min="0" max="@(item.AvailableStock > 0 ? item.AvailableStock : 0)" class="form-control form-control-sm w-auto cart-qty-input" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary d-none">Aktualizuj</button>
+                                @Html.AntiForgeryToken()
+                            </form>
+                        </td>
+                        <td>@item.Total.ToString("C")</td>
+                        <td class="text-end">
+                            <form asp-action="Remove" asp-route-id="@item.ProductId" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Usunac ten produkt z koszyka?');">Usun</button>
+                                @Html.AntiForgeryToken()
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end">Razem:</th>
+                        <th>@Model.Total.ToString("C")</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Dane do zamowienia</h4>
+                    @if (!User.Identity?.IsAuthenticated ?? true)
+                    {
+                        <div class="mb-3">
+                            <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#loginCollapse" aria-expanded="false" aria-controls="loginCollapse">
+                                Masz konto? Zaloguj sie
+                            </button>
+                            <div class="collapse mt-2" id="loginCollapse">
+                                <form asp-controller="Account" asp-action="Login" method="post">
+                                    <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Cart")" />
+                                    <div class="mb-2">
+                                        <label class="form-label">Email</label>
+                                        <input name="Email" class="form-control" type="email" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Haslo</label>
+                                        <input name="Password" class="form-control" type="password" required />
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="RememberMe" id="rememberLogin" />
+                                        <label class="form-check-label" for="rememberLogin">Zapamietaj mnie</label>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Zaloguj</button>
+                                    @Html.AntiForgeryToken()
+                                </form>
+                            </div>
+                        </div>
+                    }
+                    <form asp-action="Checkout" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="mb-3">
+                            <label asp-for="Checkout.FullName" class="form-label"></label>
+                            <input asp-for="Checkout.FullName" class="form-control" />
+                            <span asp-validation-for="Checkout.FullName" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Checkout.Email" class="form-label"></label>
+                            <input asp-for="Checkout.Email" class="form-control" readonly="@Model.EmailReadOnly" />
+                            @if (Model.EmailReadOnly)
+                            {
+                                <small class="form-text text-muted">Adres e-mail jest przypisany do Twojego konta.</small>
+                            }
+                            <span asp-validation-for="Checkout.Email" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Checkout.Phone" class="form-label"></label>
+                            <input asp-for="Checkout.Phone" class="form-control" />
+                            <span asp-validation-for="Checkout.Phone" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Checkout.Street" class="form-label"></label>
+                            <input asp-for="Checkout.Street" class="form-control" />
+                            <span asp-validation-for="Checkout.Street" class="text-danger"></span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label asp-for="Checkout.PostalCode" class="form-label"></label>
+                                    <input asp-for="Checkout.PostalCode" class="form-control postal-input" placeholder="00-000" maxlength="6" />
+                                    <span asp-validation-for="Checkout.PostalCode" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="mb-3">
+                                    <label asp-for="Checkout.City" class="form-label"></label>
+                                    <input asp-for="Checkout.City" class="form-control" />
+                                    <span asp-validation-for="Checkout.City" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="fw-bold mb-2">Laczna kwota: @Model.Total.ToString("C")</p>
+                        <div class="form-check mb-3">
+                            <input asp-for="Checkout.AcceptTerms" class="form-check-input" />
+                            <label asp-for="Checkout.AcceptTerms" class="form-check-label"></label>
+                            <span asp-validation-for="Checkout.AcceptTerms" class="text-danger d-block"></span>
+                        </div>
+                        @if (!User.Identity?.IsAuthenticated ?? true)
+                        {
+                            <div class="form-check mb-3">
+                                <input asp-for="Checkout.CreateAccount" class="form-check-input" id="createAccountCheckbox" />
+                                <label asp-for="Checkout.CreateAccount" class="form-check-label"></label>
+                                <span asp-validation-for="Checkout.CreateAccount" class="text-danger d-block"></span>
+                            </div>
+                            <div class="row g-2 mb-3 collapse" id="createAccountFields">
+                                <div class="col-12">
+                                    <label asp-for="Checkout.Password" class="form-label"></label>
+                                    <input asp-for="Checkout.Password" class="form-control" />
+                                    <span asp-validation-for="Checkout.Password" class="text-danger"></span>
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="Checkout.ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="Checkout.ConfirmPassword" class="form-control" />
+                                    <span asp-validation-for="Checkout.ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        }
+                        <button type="submit" class="btn btn-success w-100">Zamawiam</button>
+                        @Html.AntiForgeryToken()
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.cart-qty-input').forEach(input => {
+                input.addEventListener('change', e => {
+                    const form = e.target.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+
+            const postalInput = document.querySelector('.postal-input');
+            if (postalInput) {
+                postalInput.addEventListener('input', () => {
+                    const digits = postalInput.value.replace(/\D/g, '').slice(0, 5);
+                    let formatted = digits;
+                    if (digits.length > 2) {
+                        formatted = digits.substring(0, 2) + '-' + digits.substring(2);
+                    }
+                    postalInput.value = formatted;
+                });
+            }
+
+            const createCheckbox = document.getElementById('createAccountCheckbox');
+            const createFields = document.getElementById('createAccountFields');
+            if (createCheckbox && createFields) {
+                const toggleCreate = () => {
+                    if (createCheckbox.checked) {
+                        createFields.classList.add('show');
+                    } else {
+                        createFields.classList.remove('show');
+                    }
+                };
+                createCheckbox.addEventListener('change', toggleCreate);
+                toggleCreate();
+            }
+        });
+    </script>
+}

@@ -1,0 +1,59 @@
+@model IEnumerable<LabApp.Models.Product>
+@{
+    ViewData["Title"] = "Produkty (admin)";
+}
+
+<h1 class="mb-3">Panel administratora</h1>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link" asp-controller="Admin" asp-action="Index">Uzytkownicy</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" asp-controller="Products" asp-action="Index">Produkty</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-controller="AdminOrders" asp-action="Index">Zamowienia</a>
+    </li>
+</ul>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Produkty</h2>
+    <a class="btn btn-primary" asp-action="Create">Dodaj produkt</a>
+</div>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Nazwa</th>
+            <th>Opis</th>
+            <th>Kategoria</th>
+            <th>Cena</th>
+            <th>Promo</th>
+            <th>Stan</th>
+            <th>Publikacja</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Name</td>
+            <td class="text-muted">@item.Description</td>
+            <td class="text-muted">@(!string.IsNullOrWhiteSpace(item.Category) ? item.Category : "-")</td>
+            <td>@item.Price.ToString("C")</td>
+            <td>@(item.PromoPrice.HasValue ? item.PromoPrice.Value.ToString("C") : "-")</td>
+            <td>@item.Stock</td>
+            <td>@(item.Published ? "Tak" : "Nie")</td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@item.Id">Edytuj</a>
+                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Usunac produkt @item.Name?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Usun</button>
+                    @Html.AntiForgeryToken()
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

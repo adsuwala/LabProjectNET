@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Zamowienie przyjete";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (ViewBag.CheckoutSuccess is string message)
+{
+    <div class="alert alert-success">@message</div>
+}
+
+@if (ViewBag.OrderNumber is not null)
+{
+    <p><strong>Numer zamowienia:</strong> @ViewBag.OrderNumber</p>
+}
+
+@if (ViewBag.OrderTotal is string total)
+{
+    <p class="fw-bold">Kwota zamowienia: @total</p>
+}
+
+<p>Potwierdzenie wyslalismy rowniez na podany adres e-mail.</p>
+<a class="btn btn-primary" asp-controller="Home" asp-action="Index">Wroc do sklepu</a>

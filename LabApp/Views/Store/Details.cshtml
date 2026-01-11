@@ -1,0 +1,42 @@
+@model LabApp.Models.Product
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <h1>@Model.Name</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Category))
+        {
+            <p class="badge bg-light text-dark">@Model.Category</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="text-muted">@Model.Description</p>
+        }
+        @if (Model.PromoPrice.HasValue)
+        {
+            <p>
+                <span class="text-muted text-decoration-line-through me-2">@Model.Price.ToString("C")</span>
+                <span class="fw-bold text-danger">@Model.PromoPrice.Value.ToString("C")</span>
+            </p>
+        }
+        else
+        {
+            <p class="fw-bold">@Model.Price.ToString("C")</p>
+        }
+        <p><small class="text-muted">Dostepnosc: @Model.Stock</small></p>
+        @if (Model.Stock <= 0)
+        {
+            <div class="alert alert-warning">Produkt niedostepny.</div>
+        }
+        else
+        {
+            <form asp-controller="Cart" asp-action="Add" asp-route-id="@Model.Id" method="post" class="d-flex align-items-center gap-2">
+                <input type="number" name="quantity" value="1" min="1" max="@Model.Stock" class="form-control w-auto" />
+                <button type="submit" class="btn btn-primary">Dodaj do koszyka</button>
+                @Html.AntiForgeryToken()
+            </form>
+        }
+    </div>
+</div>

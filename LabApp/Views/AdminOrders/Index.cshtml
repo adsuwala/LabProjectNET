@@ -1,0 +1,120 @@
+@model LabApp.Models.AdminOrdersViewModel
+@{
+    ViewData["Title"] = "Zamowienia";
+}
+
+<h1>Panel administratora</h1>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link" asp-controller="Admin" asp-action="Index">Uzytkownicy</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-controller="Products" asp-action="Index">Produkty</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" asp-controller="AdminOrders" asp-action="Index">Zamowienia</a>
+    </li>
+</ul>
+
+<form class="row g-2 mb-3" method="get" asp-controller="AdminOrders" asp-action="Index">
+    <div class="col-md-6">
+        <input type="text" name="search" class="form-control" placeholder="Szukaj po emailu lub numerze zamowienia" value="@Model.SearchTerm" />
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-primary">Szukaj</button>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+        {
+            <a class="btn btn-link" asp-controller="AdminOrders" asp-action="Index">Wyczysc</a>
+        }
+    </div>
+</form>
+
+<div class="accordion" id="adminOrdersAccordion">
+@{
+    var index = 0;
+}
+@foreach (var order in Model.Orders)
+{
+    var collapseId = $"adminOrderCollapse{index}";
+    var headingId = $"adminOrderHeading{index}";
+    var publicId = string.IsNullOrWhiteSpace(order.PublicId) ? $"ORD-{order.Id}" : order.PublicId;
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="@headingId">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                @publicId - @order.CreatedAt.ToLocalTime().ToString("g") - @($"{order.Total:C}")
+            </button>
+        </h2>
+        <div id="@collapseId" class="accordion-collapse collapse" aria-labelledby="@headingId" data-bs-parent="#adminOrdersAccordion">
+            <div class="accordion-body">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <strong>Numer zamowienia:</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary copy-order-id" data-order-id="@publicId">@publicId</button>
+                </div>
+                <p><strong>Email:</strong> @order.Email</p>
+                <p><strong>Telefon:</strong> @order.Phone</p>
+                <p><strong>Adres:</strong> @order.FullName, @order.Street, @order.PostalCode @order.City</p>
+                <p class="text-muted small mb-3">Data utowrzenia: @order.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Produkt</th>
+                            <th>Cena</th>
+                            <th>Ilosc</th>
+                            <th>Suma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in order.Items)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td>@($"{(item.PromoPrice ?? item.UnitPrice):C}")</td>
+                            <td>@item.Quantity</td>
+                            <td>@($"{item.LineTotal:C}")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    index++;
+}
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Paginacja zamowien">
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                var isActive = i == Model.Page ? "active" : string.Empty;
+                <li class="page-item @isActive">
+                    <a class="page-link" asp-controller="AdminOrders" asp-action="Index" asp-route-page="@i" asp-route-search="@Model.SearchTerm">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.copy-order-id');
+            if (!btn) return;
+            const text = btn.getAttribute('data-order-id');
+            if (!text) return;
+            navigator.clipboard?.writeText(text).then(() => {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-success');
+                btn.textContent = text + ' (skopiowano)';
+                setTimeout(() => {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-secondary');
+                    btn.textContent = text;
+                }, 1200);
+            });
+        });
+    </script>
+}
